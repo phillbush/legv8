@@ -151,7 +151,7 @@ favorite text editor.  Note that the file `memory.dump` contains one byte
 per line; while the file `registers.dump` contain one register (8 bytes)
 per line.
 
-*Step 5: Check the RTL netlist.*
+**Step 5: Check the RTL netlist.**
 To view the RTL netlist of the datapath (or any other module), we can use yosys(1).
 
 The following command generates the file `netlist.png` with the RTL
@@ -165,7 +165,14 @@ netlist of the datapath module.  Note that we also need to define
 	            hierarchy -check; \
 	            show -stretch -format png -prefix ./netlist datapath"
 
-*Notes.*
+To automate this step, the Makefile in the directory `cpu-singlecycle/`
+can synthesizde the rtl netlist with the following command.
+
+	$ cd cpu-singlecycle
+	$ make rtl
+
+
+**Notes.**
 To run the simulation with another program,
 replace `sumtwo` with the program you assembled.
 To run the simulation with another CPU,
