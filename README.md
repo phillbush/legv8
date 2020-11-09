@@ -1,5 +1,5 @@
-                             LEGv8
-                             =====
+LEGv8
+=====
 
 This repository contains two implementations of a LEGv8 CPU;
 it also contains some tools written in AWK used to test the CPU:
