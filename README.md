@@ -21,12 +21,12 @@ All files are in public domain.
 
 ## FILES
 
-CPU-pipelined:   A pipelined implementation of a LEGv8 CPU.
-CPU-singlecycle: A single-cycle implementation of a LEGv8 CPU.
-include:         Headers defining constants such as bus sizes and opcodes.
-modules:         Modules shared by all implementations.
-samples:         A sample program written in LEGv8 assembly.
-tools:           Some AWK tools (an assembler and a testbench generator).
+* `CPU-pipelined:`   A pipelined implementation of a LEGv8 CPU.
+* `CPU-singlecycle:` A single-cycle implementation of a LEGv8 CPU.
+* `include:`         Headers defining constants such as bus sizes and opcodes.
+* `modules:`         Modules shared by all implementations.
+* `samples:`         A sample program written in LEGv8 assembly.
+* `tools:`           Some AWK tools (an assembler and a testbench generator).
 
 
 ## USAGE
@@ -179,16 +179,23 @@ To run the simulation with another CPU,
 replace `cpu-singlecycle` with the CPU you want.
 
 
-## THE ASSEMBLER
-
-
 ## THE CPU
 
 The following is a list of instructions supported by this implementation.
-☐ 
+
+TODO
+
+
+## THE ASSEMBLER
+
+TODO
 
 
 ## THE TESTBENCH GENERATOR
 
+TODO
+
 
 ## SEE ALSO
+
+TODO
