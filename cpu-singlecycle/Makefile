@@ -1,7 +1,6 @@
-.SUFFIXES: .v .vcd
+# the variable PROG must be set to a program name in ../samples
 
 # the program to be read into the instruction memory
-PROG = sumtwo
 TEXT = ../samples/${PROG}.text
 DATA = ../samples/${PROG}.data
 

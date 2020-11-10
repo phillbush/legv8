@@ -31,7 +31,7 @@ All files are in public domain.
 ## USAGE
 
 **Step 1: Assemble the program.**
-First, to test a CPU, a program should be assembled and load into the memory.
+First, to test a CPU, a program should be assembled in order to be load into the memory.
 
 The directory `samples/` contains simple sample programs that can be used.
 To assemble them, use the AWK assembler located in `tools/asm`.
@@ -52,7 +52,7 @@ assembles all programs and generate both files for each of them.
 	$ make
 
 **Step 2: Generate the testbench.**
-To test the CPU, a testbench should be generated to set the clock the CPU uses.
+To test the CPU, a testbench should be generated to pulse the clock the CPU uses.
 
 The directory `cpu-singlecycle/` contains the datapath for a single-cycle CPU.
 The datapath is the main module of the CPU, that instantiate all other modules.
@@ -63,15 +63,15 @@ we'll improve this command with some arguments later.
 	$ cd cpu-singlecycle
 	$ ../tools/tbgen datapath.v > testbench.v
 
-This command will fail, since the datapath module needs some data in
+This command will fail, since the datapath module needs some data in the
 files in the directory ../include.  To specify this directory, we need
 to add the following argument:
 
 	-v incdir=../include
 
-This command generates a file `testbench.v` that, when simulated with iverilog(1),
+This command generates a file `testbench.v` that, when simulated,
 will create a file called `testbench.vcd` containing the waveforms of the CPU.
-But this waveform is useless, as it only shows the waves for the two CPU inputs,
+But this waveform is useless, it only shows waves for the inputs controlled by the testbench,
 which are the clock and the reset signals.  To dump waveforms for more signals,
 we need to set the dumplevel to 3: thus we will dump the signals of the testbench
 itself, the module under test (datapath.v) and the modules instanciated by the
@@ -109,11 +109,12 @@ can generate the testbench for the datapath with the following command.
 **Step 3: Run the simulation.**
 To run the simulation, we must first run iverilog(1) to compile the sources
 of the datapath and the modules used by it (located at `../modules`).  Then,
-run vvp(1) to do the simulation and generate the file `testbench.vcd`, which
+run vvp(1) to do the simulation and generate the files `testbench.vcd`, which
 contains the waveforms; `registers.dump`, which contains the contents of the
 registers; and `memory.dump`, which contains the contents of the registers.
 The following commands do it, it will generate the file `testbench`, which we
-can delete.  But don't run these commands yet, as they will fail.
+can delete after running vvp(1).
+But don't run these commands yet, as they will fail.
 
 	$ cd cpu-singlecycle
 	$ iverilog -s testbench -o testbench testbench.v datapth.v ../modules/*.v
@@ -137,10 +138,11 @@ are testing.  The following command do all of this.
 	$ rm testbench
 
 To automate this step, the Makefile in the directory `cpu-singlecycle/`
-can run the simulation with the following command.
+can run the simulation with the following command.  We just need to set
+the variable `PROG` to point to the correct program and make `sim` (simulation).
 
 	$ cd cpu-singlecycle
-	$ make sim
+	$ make PROG=sumtwo sim
 
 
 **Step 4: Check the results of the simulation.**
@@ -169,14 +171,13 @@ To automate this step, the Makefile in the directory `cpu-singlecycle/`
 can synthesizde the rtl netlist with the following command.
 
 	$ cd cpu-singlecycle
-	$ make rtl
+	$ make PROG=sumtwo rtl
 
 
 **Notes.**
 To run the simulation with another program, replace `sumtwo` in the
-Makefiles with the program you assembled.  To run the simulation with
-another CPU, replace the `cpu-singlecycle` directory with the directory
-of CPU you want to test.
+`make` invocations with the program you assembled.  To run the simulation with
+another CPU, go to a directory other than `cpu-singlecycle`.
 
 
 ## INSTRUCTIONS

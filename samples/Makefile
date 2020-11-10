@@ -1,6 +1,6 @@
 .SUFFIXES: .s .text .data
 
-SRCS = sumtwo.s formats.s
+SRCS = sumtwo.s
 TEXT = ${SRCS:.s=.text}
 DATA = ${SRCS:.s=.data}
 
