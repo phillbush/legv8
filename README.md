@@ -7,26 +7,25 @@ a simple LEGv8 assembler and a verilog testbench generator.
 It is the final project of the Computer Organization and Architecture
 course of the Computer Science department of the University of Brasilia.
 
-LEGv8 is a simple subset of the ARMv8 AArch64 architecture.
-LEGv8 is a 64-bit architecture that uses 32-bit instructions.
+LEGv8 is a simple subset of the ARMv8 AArch64 architecture;
+it is a 64-bit architecture that uses 32-bit instructions.
 It has 32 registers, each 64-bits wide, (one of them always zero).
 To simplify the design, this CPU uses the Harvard memory architecture;
 this architecture uses two memories: one for the program itself (the
-program memory) and another for the data the program uses (the data
-memory).  It differs from the Von Neumann architecture in which there is
-a single memory.
+program memory) and another for the data the program uses (the data memory).
+It differs from the Von Neumann architecture in which there is a single memory.
 
 All files are in public domain.
 
 
 ## FILES
 
-* `CPU-pipelined:`   A pipelined implementation of a LEGv8 CPU.
-* `CPU-singlecycle:` A single-cycle implementation of a LEGv8 CPU.
-* `include:`         Headers defining constants such as bus sizes and opcodes.
-* `modules:`         Modules shared by all implementations.
-* `samples:`         A sample program written in LEGv8 assembly.
-* `tools:`           Some AWK tools (an assembler and a testbench generator).
+* `CPU-pipelined`:   A pipelined implementation of a LEGv8 CPU.
+* `CPU-singlecycle`: A single-cycle implementation of a LEGv8 CPU.
+* `include`:         Headers defining constants such as bus sizes and opcodes.
+* `modules`:         Modules shared by all implementations.
+* `samples`:         A sample program written in LEGv8 assembly.
+* `tools`:           AWK tools (an assembler and a testbench generator).
 
 
 ## USAGE
@@ -56,6 +55,7 @@ assembles all programs and generate both files for each of them.
 To test the CPU, a testbench should be generated to set the clock the CPU uses.
 
 The directory `cpu-singlecycle/` contains the datapath for a single-cycle CPU.
+The datapath is the main module of the CPU, that instantiate all other modules.
 In this directory, run the testbench generator at `tools/tbgen` to generate a
 testbench for this CPU.  The following command do this, but do not run it yet,
 we'll improve this command with some arguments later.
@@ -82,12 +82,12 @@ module under test.  The following argument do this
 In addition to the waveforms of the signals of the CPU, we can dump the contents
 of the data memory and the registers of the CPU at the end of the simulation.
 The contents of the data memory are in the array `memdata.data`, and
-the contents of the registers are in the array `regfile.registers`.
+the contents of the registers are in the array `registerfile.registers`.
 The following arguments for `tools/tbgen` dump the contents of the data memory
 into the file `memory.dump` and the contents of the registers into the file
 `registers.dump`.
 
-	dump:regfile.registers:registers.dump \
+	dump:registerfile.registers:registers.dump \
 	dump:memdata.data:memory.dump
 
 Assembling all arguments, we got the following command.
@@ -95,7 +95,7 @@ Assembling all arguments, we got the following command.
 	$ cd cpu-singlecycle
 	$ ../tools/tbgen -v incdir=../include \
 	                 -v dumplevel=3 \
-	                 dump:regfile.registers:registers.dump \
+	                 dump:registerfile.registers:registers.dump \
 	                 dump:memdata.data:memory.dump \
 	                 datapath.v \
 	                 >testbench.v
@@ -173,29 +173,101 @@ can synthesizde the rtl netlist with the following command.
 
 
 **Notes.**
-To run the simulation with another program,
-replace `sumtwo` with the program you assembled.
-To run the simulation with another CPU,
-replace `cpu-singlecycle` with the CPU you want.
+To run the simulation with another program, replace `sumtwo` in the
+Makefiles with the program you assembled.  To run the simulation with
+another CPU, replace the `cpu-singlecycle` directory with the directory
+of CPU you want to test.
 
 
-## THE CPU
+## INSTRUCTIONS
 
-The following is a list of instructions supported by this implementation.
+Check the directories `cpu-*` and `modules` for more information on
+the modules that compose the CPUs.
 
-TODO
+The following is a list of LEGv8 instructions.
+Instructions that are checked are the ones supported by this implementation.
+Multiplication, division and floating-point operations are not supported yet.
 
+* [x] LSR
+* [x] LSL
+* [ ] MUL
+* [ ] SMULH
+* [ ] UMULH
+* [ ] SDIV
+* [ ] UDIV
+* [x] ADD
+* [x] SUB
+* [x] AND
+* [x] ORR
+* [x] EOR
+* [x] ANDS
+* [x] ADDS
+* [x] SUBS
+* [x] ADDI
+* [x] SUBI
+* [x] ANDI
+* [x] ORRI
+* [x] EORI
+* [x] ANDIS
+* [x] ADDIS
+* [x] SUBIS
+* [ ] FADDS
+* [ ] FADDD
+* [ ] FCMPS
+* [ ] FCMPD
+* [ ] FDIVS
+* [ ] FDIVD
+* [ ] FMULS
+* [ ] FMULD
+* [ ] FSUBS
+* [ ] FSUBD
+* [x] B
+* [x] BL
+* [x] BR
+* [x] CBZ
+* [x] CBNZ
+* [x] B.EQ
+* [x] B.NE
+* [x] B.LT
+* [x] B.LE
+* [x] B.GT
+* [x] B.GE
+* [x] B.LO
+* [x] B.LS
+* [x] B.HI
+* [x] B.HS
+* [x] B.MI
+* [x] B.PL
+* [x] B.VS
+* [x] B.VC
+* [ ] LDURB
+* [ ] LDURH
+* [ ] LDURSW
+* [x] LDUR
+* [ ] LDXR
+* [ ] STURB
+* [ ] STURH
+* [ ] STURW
+* [x] STUR
+* [ ] STXR
+* [ ] LDURS
+* [ ] LDURD
+* [ ] STURS
+* [ ] STURD
+* [x] MOVK
+* [x] MOVZ
 
-## THE ASSEMBLER
+The following is a list of pseudo instructions supported by the assembler.
 
-TODO
-
-
-## THE TESTBENCH GENERATOR
-
-TODO
+* [x] MOV
+* [x] CMP
+* [x] CMPI
+* [x] LDA
 
 
 ## SEE ALSO
 
-TODO
+Computer Organization and Design: The Hardware/Software Interface ARM Edition
+by D. Patterson and J. Hennessy,
+Morgan Kaufmann, 2016.
+ISBN: 978-012-8017333.

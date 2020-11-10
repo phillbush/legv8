@@ -10,7 +10,7 @@ module alu(a, b, shamt, aluop, res, flags);
 	output wire signed [`WORDSIZE-1:0] res;  /* alu result */
 	output wire [`FLAGSIZE-1:0] flags;       /* result flags */
 
-	wire [`WORDSIZE:0] array[0:4];           /* array of possible results */
+	wire [`WORDSIZE:0] array[0:3];           /* array of possible results */
 	wire [`WORDSIZE:0] useda;                /* value of operand B to be used */
 	wire [`WORDSIZE:0] usedb;                /* value of operand A to be used */
 	wire shift;                              /* whether to shift */

@@ -1,5 +1,7 @@
 /* last two bits of ALU operation code */
-`define CONTROLSIZE     9
+`define CONTROLSIZE     11
+`define BRANCH          10
+`define MOVKEEP         9
 `define REG1LOC         8
 `define REG2LOC         7
 `define MEMREAD         6

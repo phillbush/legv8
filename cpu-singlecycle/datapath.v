@@ -1,6 +1,8 @@
 `include "bus.vh"
 `include "control.vh"
 `include "registers.vh"
+`include "aluop.vh"
+`include "movop.vh"
 
 module datapath(clk, rst);
 	input wire clk;                         /* clock */
@@ -36,8 +38,9 @@ module datapath(clk, rst);
 	wire alusrc;            /* whether 2nd ALU operand is second register read or extension */
 	wire regwrite;          /* whether to write on register file */
 	wire [1:0] regsrc;      /* where the data to be written into register comes from */
-	wire [`CONTROLSIZE-1:0] control;
 	wire [`ALUOPSIZE-1:0] aluop;
+	wire [`MOVOPSIZE-1:0] movop;
+	wire [`CONTROLSIZE-1:0] control;
 	wire [`FLAGSIZE-1:0] flagstoset;
 	wire [`SHAMTSIZE-1:0] shift;
 
@@ -49,6 +52,7 @@ module datapath(clk, rst);
 	assign rd     = instruction[4:0];
 
 	/* disassemble the control */
+	assign branch = control[`BRANCH];
 	assign reg1loc = control[`REG1LOC];
 	assign reg2loc = control[`REG2LOC];
 	assign memread = control[`MEMREAD];
@@ -64,30 +68,27 @@ module datapath(clk, rst);
 	/* get instruction from the address in the program counter */
 	memprog memprog(pc, instruction);
 
-	/* check whether to branch */
-	branchcontrol branchcontrol(opcode, rd, flags, flagstoset[2], branch);
-
 	/* set the control signals and the alu operation */
-	controlunit cu(opcode, control, aluop);
+	controlunit cu(opcode, rd, flags, flagstoset[2], control, aluop, movop);
 
 	/* extend the immediate or address in the instruction */
 	signextension signextension(instruction, extended);
 
 	/* read and write registers from the register file */
-	registerfile regfile(clk, rst,
-	                     (reg1loc ? `XZR : rn),
-	                     (reg2loc ? rd : rm),
-	                     (regsrc == `REGSRC_PC ? `XLR : rd),
-	                     ( regsrc == `REGSRC_PC ? pc
-	                     : regsrc == `REGSRC_MOV ? movres
-	                     : regsrc == `REGSRC_MEM ? readmem
-	                     : alures),
-	                     regwrite,
-	                     readreg1,
-	                     readreg2);
+	registerfile registerfile(clk, rst,
+	                          (reg1loc ? `XZR : rn),
+	                          (reg2loc ? rd : rm),
+	                          (regsrc == `REGSRC_PC ? `XLR : rd),
+	                          ( regsrc == `REGSRC_PC ? pc
+	                          : regsrc == `REGSRC_MOV ? movres
+	                          : regsrc == `REGSRC_MEM ? readmem
+	                          : alures),
+	                          regwrite,
+	                          readreg1,
+	                          readreg2);
 
 	/* how many bits to shift the second alu operand */
-	mov mov(opcode, readreg2, extended, movres);
+	mov mov(readreg2, extended, movop, movres);
 
 	/* the arithmetic-logic unit */
 	alu alu(readreg1,

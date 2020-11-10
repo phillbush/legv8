@@ -19,7 +19,6 @@ MAIN = datapath
 SRCS = ${MAIN}.v \
        ../modules/controlunit.v \
        ../modules/alu.v \
-       ../modules/branchcontrol.v \
        ../modules/flagsreg.v \
        ../modules/memdata.v \
        ../modules/memprog.v \
@@ -36,7 +35,7 @@ rtl: netlist.png
 testbench.v: ${SRCS}
 	../tools/tbgen -v incdir=${INCLUDE} \
 	               -v dumplevel=3 \
-	               dump:regfile.registers:${REGDUMP} \
+	               dump:registerfile.registers:${REGDUMP} \
 	               dump:memdata.data:${MEMDUMP} \
 	               ${MAIN}.v \
 	               >testbench.v
@@ -55,6 +54,6 @@ netlist.png: ${SRCS}
 	show -stretch -format png -prefix ./netlist ${MAIN}"
 
 clean:
-	-rm testbench* netlist.* ${TEXT} ${DATA} ${DUMP}
+	-rm testbench* netlist.* ${DUMP}
 
 .PHONY: all sim rtl clean
