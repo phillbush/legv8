@@ -1,15 +1,17 @@
+`include "aluop.vh"
 `include "bus.vh"
 `include "control.vh"
-`include "registers.vh"
-`include "aluop.vh"
+`include "flags.vh"
 `include "movop.vh"
+`include "registers.vh"
 
 module datapath(clk, rst);
 	input wire clk;                         /* clock */
 	input wire rst;                         /* reset */
 
-	/* internal registers */
+	/* wires for internal registers */
 	wire [`WORDSIZE-1:0] pc;                /* program counter */
+	wire [`WORDSIZE-1:0] branchpc;          /* program counter plus extended data */
 	wire [`FLAGSIZE-1:0] flags;             /* alu flags */
 
 	/* the instruction and its parts */
@@ -21,9 +23,10 @@ module datapath(clk, rst);
 	wire [`SHAMTSIZE-1:0] shamt;
 
 	/* word data signals */
-	wire [`WORDSIZE-1:0] readreg1;          /* value of 1st register read */
-	wire [`WORDSIZE-1:0] readreg2;          /* value of 2nd register read */
-	wire [`WORDSIZE-1:0] readmem;           /* value of read from memory */
+	wire [`WORDSIZE-1:0] writereg;          /* data to be written on the registers */
+	wire [`WORDSIZE-1:0] readreg1;          /* data of 1st register read */
+	wire [`WORDSIZE-1:0] readreg2;          /* data of 2nd register read */
+	wire [`WORDSIZE-1:0] readmem;           /* data of read from memory */
 	wire [`WORDSIZE-1:0] alures;            /* result of the alu */
 	wire [`WORDSIZE-1:0] movres;            /* result of the mov module */
 	wire [`WORDSIZE-1:0] extended;          /* output of sign-extension */
@@ -42,7 +45,6 @@ module datapath(clk, rst);
 	wire [`MOVOPSIZE-1:0] movop;
 	wire [`CONTROLSIZE-1:0] control;
 	wire [`FLAGSIZE-1:0] flagstoset;
-	wire [`SHAMTSIZE-1:0] shift;
 
 	/* disassemble the instruction */
 	assign opcode = instruction[31:21];
@@ -52,7 +54,6 @@ module datapath(clk, rst);
 	assign rd     = instruction[4:0];
 
 	/* disassemble the control */
-	assign branch = control[`BRANCH];
 	assign reg1loc = control[`REG1LOC];
 	assign reg2loc = control[`REG2LOC];
 	assign memread = control[`MEMREAD];
@@ -62,14 +63,20 @@ module datapath(clk, rst);
 	assign regwrite = control[`REGWRITE];
 	assign regsrc = control[`REGSRC1:`REGSRC0];
 
+	/* decide which data will be written back on the registers */
+	assign writereg = regsrc == `REGSRC_PC ? pc
+	                : regsrc == `REGSRC_MOV ? movres
+	                : regsrc == `REGSRC_MEM ? readmem
+	                : alures;
+
 	/* compute program counter at each clock posedge */
-	programcounter progcount(clk, rst, branch, extended, pc);
+	programcounter progcount(clk, rst, 1'b0, branch, branchpc, pc);
 
 	/* get instruction from the address in the program counter */
 	memprog memprog(pc, instruction);
 
 	/* set the control signals and the alu operation */
-	controlunit cu(opcode, rd, flags, flagstoset[2], control, aluop, movop);
+	controlunit controlunit(opcode, control, aluop, movop);
 
 	/* extend the immediate or address in the instruction */
 	signextension signextension(instruction, extended);
@@ -79,13 +86,13 @@ module datapath(clk, rst);
 	                          (reg1loc ? `XZR : rn),
 	                          (reg2loc ? rd : rm),
 	                          (regsrc == `REGSRC_PC ? `XLR : rd),
-	                          ( regsrc == `REGSRC_PC ? pc
-	                          : regsrc == `REGSRC_MOV ? movres
-	                          : regsrc == `REGSRC_MEM ? readmem
-	                          : alures),
+	                          writereg,
 	                          regwrite,
 	                          readreg1,
 	                          readreg2);
+
+	/* sum pc with extended data */
+	pcadder pcadder(pc, extended, branchpc);
 
 	/* how many bits to shift the second alu operand */
 	mov mov(readreg2, extended, movop, movres);
@@ -93,10 +100,13 @@ module datapath(clk, rst);
 	/* the arithmetic-logic unit */
 	alu alu(readreg1,
 	        (alusrc ? extended : readreg2),
-	        shift,
+	        shamt,
 	        aluop,
 	        alures,
 	        flagstoset);
+
+	/* set the control signals and the alu operation */
+	branchcontrol branchcontrol(opcode, rd, flags, flagstoset[`ZERO], branch);
 
 	/* control the flags register */
 	flagsregister flagsreg(clk, rst, setflags, flagstoset, flags);

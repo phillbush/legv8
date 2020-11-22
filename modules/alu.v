@@ -1,8 +1,8 @@
 `include "bus.vh"
+`include "flags.vh"
 `include "aluop.vh"
 
 module alu(a, b, shamt, aluop, res, flags);
-
 	input wire signed [`WORDSIZE-1:0] a;     /* operand A */
 	input wire signed [`WORDSIZE-1:0] b;     /* operand B */
 	input wire [`SHAMTSIZE-1:0] shamt;       /* shift amount */

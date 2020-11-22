@@ -1,4 +1,5 @@
 `include "bus.vh"
+`include "registers.vh"
 
 module registerfile(clk, reset, rn, rm, rd, in, wren, outn, outm);
 	input wire clk;
@@ -28,6 +29,6 @@ module registerfile(clk, reset, rn, rm, rd, in, wren, outn, outm);
 		if (reset)
 			for (i = 0; i < 2**`REGADDRSIZE; i++)
 				registers[i] = {`WORDSIZE{1'b0}};
-		else if (wren && rd != 'd31)
+		else if (wren && rd != `XZR)
 			registers[rd] = in;
 endmodule

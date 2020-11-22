@@ -16,12 +16,14 @@ INCLUDE = ../include
 # and should be named as the module name
 MAIN = datapath
 SRCS = ${MAIN}.v \
+       ../modules/branchcontrol.v \
        ../modules/controlunit.v \
        ../modules/alu.v \
        ../modules/flagsreg.v \
        ../modules/memdata.v \
        ../modules/memprog.v \
        ../modules/mov.v \
+       ../modules/pcadder.v \
        ../modules/programcounter.v \
        ../modules/registerfile.v \
        ../modules/signextension.v

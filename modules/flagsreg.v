@@ -1,4 +1,5 @@
 `include "bus.vh"
+`include "flags.vh"
 
 module flagsregister(clk, reset, setflags, flagstoset, flags);
 	input wire clk;
