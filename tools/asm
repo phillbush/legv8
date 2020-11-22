@@ -413,7 +413,6 @@ function assemble(mempos, instruction, n, a, opcode, op1, op2, op3, format, i, c
 		a[4] = ""
 	}
 	assembled = opcode a[1] a[2] a[3] a[4]
-	print assembled >"/dev/stderr"
 	assembled = btoh(assembled, textsize)
 	print assembled >textfile
 }
