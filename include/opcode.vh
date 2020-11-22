@@ -26,6 +26,10 @@
 `define BFLAG_MASK      'b111_1111_1000
 `define BFLAG_BITSET    'b010_1010_0000
 
+/* mask and bitset of opcodes for all branch-related instructions */
+`define BRANCH_MASK     'b000_1110_0000
+`define BRANCH_BITSET   'b000_1010_0000
+
 /* mask and bitset of opcodes for memory-load instructions */
 `define LDUR_MASK       'b001_1111_1111
 `define LDUR_BITSET     'b001_1100_0010

@@ -16,7 +16,7 @@ These header files define constants such as bus sizes, opcodes bitmasks, memory 
 * `registers.vh`:       Definitions of internally used register addresses.
 
 
-## Description
+## DESCRIPTION
 
 **aluop.vh.**
 This header defines the size of the control signal that defines
