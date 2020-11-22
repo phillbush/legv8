@@ -10,7 +10,6 @@ This directory contains the module implementing a single-cycle LEGv8 CPU.
 ## DESCRIPTION
 
 A single-cycle processor is a processor that carries out one instruction in a single clock cycle.
-
 Single-cycle processors are simple in terms of hardware requirements, and are easy to design.
 But they tend to have poor data throughput,
 and require long clock cycles (slow clock rate)
