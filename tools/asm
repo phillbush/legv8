@@ -3,8 +3,8 @@
 
 BEGIN {
 	# variables set by -v
-	if (!databeg)   databeg = 0
-	if (!textsize)  textsize = 32
+	if (!databeg)   databeg = 0     # Beginning of the data section
+	if (!textsize)  textsize = 32   # Size of each instruction on text section
 
 	# constants
 	TEXT = "text"
@@ -23,6 +23,25 @@ BEGIN {
 	# create/truncate the files
 	printf "" >textfile
 	printf "" >datafile
+
+	# populate btohtab
+	btohtab["0000"] = "0"
+	btohtab["0000"] = "0"
+	btohtab["0001"] = "1"
+	btohtab["0010"] = "2"
+	btohtab["0011"] = "3"
+	btohtab["0100"] = "4"
+	btohtab["0101"] = "5"
+	btohtab["0110"] = "6"
+	btohtab["0111"] = "7"
+	btohtab["1000"] = "8"
+	btohtab["1001"] = "9"
+	btohtab["1010"] = "a"
+	btohtab["1011"] = "b"
+	btohtab["1100"] = "c"
+	btohtab["1101"] = "d"
+	btohtab["1110"] = "e"
+	btohtab["1111"] = "f"
 }
 
 # write to stderr and exit
@@ -203,40 +222,8 @@ function btoh(b, size, h, a, i, n) {
 		a[i] = substr(b, n, 4)
 		n += 4
 	}
-	for (i = 1; i <= size; i++) {
-		if (a[i] == "0000")
-			a[i] = "0"
-		else if (a[i] == "0001")
-			a[i] = "1"
-		else if (a[i] == "0010")
-			a[i] = "2"
-		else if (a[i] == "0011")
-			a[i] = "3"
-		else if (a[i] == "0100")
-			a[i] = "4"
-		else if (a[i] == "0101")
-			a[i] = "5"
-		else if (a[i] == "0110")
-			a[i] = "6"
-		else if (a[i] == "0111")
-			a[i] = "7"
-		else if (a[i] == "1000")
-			a[i] = "8"
-		else if (a[i] == "1001")
-			a[i] = "9"
-		else if (a[i] == "1010")
-			a[i] = "a"
-		else if (a[i] == "1011")
-			a[i] = "b"
-		else if (a[i] == "1100")
-			a[i] = "c"
-		else if (a[i] == "1101")
-			a[i] = "d"
-		else if (a[i] == "1110")
-			a[i] = "e"
-		else if (a[i] == "1111")
-			a[i] = "f"
-	}
+	for (i = 1; i <= size; i++)
+		a[i] = btohtab[a[i]]
 	for (i = 1; i <= size; i += 2)
 		h = h (i > 1 ? " " : "") a[i] a[i+1]
 	return h
