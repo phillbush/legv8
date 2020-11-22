@@ -397,12 +397,12 @@ function assemble(mempos, instruction, n, a, opcode, op1, op2, op3, format, i, c
 		a[3] = ""
 		a[4] = ""
 	} else if (format == "LDUR") {
-		a[1] = dtob(symtab[op3], 9)
+		a[1] = dtob(op3, 9)
 		a[2] = "11"
 		a[3] = getregister(op2)
 		a[4] = getregister(op1)
 	} else if (format == "STUR") {
-		a[1] = dtob(symtab[op3], 9)
+		a[1] = dtob(op3, 9)
 		a[2] = "00"
 		a[3] = getregister(op2)
 		a[4] = getregister(op1)
