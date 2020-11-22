@@ -249,9 +249,9 @@ function getregister(reg) {
 	sub(/^X/, "", reg)
 	if (reg == "ZR")
 		return 11111
-	if (reg < 0 || reg > 31)
+	if (reg + 0 < 0 || reg + 0 > 31)
 		err("unknown register: X" reg)
-	return dtob(reg, 5)
+	return dtob(reg + 0, 5)
 }
 
 # write words from $0 into data memory
