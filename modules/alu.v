@@ -17,8 +17,8 @@ module alu(a, b, shamt, aluop, res, flags);
 	wire shdir;                              /* shift direction (1 to right, 0 to left) */
 
 	/* value of operands to be used */
-	assign useda = aluop[5] ? {1'b0, ~a} : {1'b0, a};
-	assign usedb = aluop[4] ? {1'b0, ~b} : {1'b0, b};
+	assign useda = aluop[5] ? {1'b0, ~a} + 1 : {1'b0, a};
+	assign usedb = aluop[4] ? {1'b0, ~b} + 1 : {1'b0, b};
 
 	/* set shift parameters */
 	assign shift = aluop[3];
