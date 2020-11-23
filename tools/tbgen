@@ -4,6 +4,7 @@
 
 BEGIN {
 	# variables settable by -v
+	if (!timeunit)  timeunit = "ns"
 	if (!tbname)    tbname = "testbench"
 	if (!vcdfile)   vcdfile = "testbench.vcd"
 	if (!dumplevel) dumplevel = 1
@@ -133,7 +134,7 @@ function decreasing(n, i) {
 }
 
 function header() {
-	print "`timescale " timescale " ns / " timescale " ns"
+	printf "`timescale %s %s / %s %s", timescale, timeunit, timescale, timeunit
 	print ""
 	print "module " tbname "();"
 }
