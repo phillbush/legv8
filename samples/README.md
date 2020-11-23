@@ -7,7 +7,8 @@ These programs are made to be compiled with the assembler in
 
 ## FILES
 
-* `sumtwo.s`:        A program that sum two integers.
+* `sumtwo.s`:   A program that sum two integers.
+* `sumarray.s`: A program that sum the elements of an array.
 
 
 ## SUMTWO.S
@@ -24,3 +25,13 @@ CPUs and the assembler:
 * It tests the capacity of the CPU to access data from memory.
 * It tests the CPU's Arithmetic Logic Unit (ALU).
 * It tests the usage of registers, both to read and to write into them.
+
+
+## SUMARRAY.S
+
+The program `sumarray.s` reads ten 8-byte elements from the memory into
+`X2` and sum them up into `X3`.  `X0` is a pointer to the current element
+of the array, and `X1` is the size of the array.
+
+In addition to the tests performed by `sumtwo.s`,
+this program tests the capacity of the CPU to branch with the CBZ instruction.
