@@ -56,6 +56,7 @@ module datapath(clk, rst);
 	wire [`SHAMTSIZE-1:0] shamt;
 
 	/* wires for ID-EX register */
+	wire idex_nop;
 	wire [`IDEX_CONTROLSIZE-1:0] idex_control;
 	wire [`OPCODESIZE-1:0] idex_opcode;
 	wire [`ALUOPSIZE-1:0] idex_aluop;
@@ -70,6 +71,7 @@ module datapath(clk, rst);
 	wire [`REGADDRSIZE-1:0] idex_rd;
 
 	/* wires for EX stage */
+	wire exmem_nop;
 	wire [`WORDSIZE-1:0] branchpc;
 	wire [`WORDSIZE-1:0] forwardop;         /* forward operand */
 	wire [`WORDSIZE-1:0] movoperand;        /* operand of the mov */
@@ -115,9 +117,9 @@ module datapath(clk, rst);
 		stage <= 2'b0;
 
 	/* whether to make a instruction be a no-operation */
-	assign nop = (stage[2]
-	           ? (branch && (memwb_branchpc != pc))
-	           : 1'b0);
+	assign nop = stage[2]
+	           ? (branch && (memwb_pc != pc))
+	           : 1'b0;
 
 	/* disassemble the instruction */
 	assign opcode = ifid_instruction[31:21];
@@ -134,21 +136,21 @@ module datapath(clk, rst);
 	assign forwardop = exmem_control[`REGSRC1:`REGSRC0] == `REGSRC_MOV ? exmem_movres : exmem_alures;
 
 	/* operand of the MOV Unit */
-	assign movoperand = (stage[1] && stage[0] && forwarda[`FORWARDUSE])
+	assign movoperand = ((stage == 3'b011) && forwarda[`FORWARDUSE])
 	                  ? forwardop
 	                  : (stage[2] && forwarda[`FORWARDUSE])
 	                  ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
 	                  : idex_readreg2;
 
 	/* operands of the ALU */
-	assign alua = (stage[1] && stage[0] && forwarda[`FORWARDUSE])
+	assign alua = ((stage == 3'b011) && forwarda[`FORWARDUSE])
 	            ? forwardop
 	            : (stage[2] && forwarda[`FORWARDUSE])
 	            ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
 	            : idex_readreg1;
 	assign alub = idex_control[`ALUSRC]
 	            ? idex_extended
-	            : (stage[1] && stage[0] && forwardb[`FORWARDUSE])
+	            : ((stage == 3'b011) && forwardb[`FORWARDUSE])
 	            ? forwardop
 	            : (stage[2] && forwardb[`FORWARDUSE])
 	            ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
@@ -160,16 +162,17 @@ module datapath(clk, rst);
 	                : memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_MEM ? memwb_readmem
 	                : memwb_alures;
 
-	/* count stages (from 3'b000 to 3'b100) */
+	/* count stages */
 	always @(posedge clk)
-		if (!stage[2])
+		if (stage < {`COUNTERSIZE{1'b1}})
 			stage++;
 
 	/* IF-ID register */
 	ifid ifid(clk, stall, nop, pc, instruction, ifid_nop, ifid_pc, ifid_instruction);
 
 	/* ID-EX register */
-	idex idex(clk, ifid_nop,
+	idex idex(clk, nop,
+	          ifid_nop,
 	          (stall ? {`IDEX_CONTROLSIZE{1'b0}} : control[`IDEX_CONTROLSIZE-1:0]),
 	          opcode,
 	          aluop,
@@ -182,6 +185,7 @@ module datapath(clk, rst);
 	          ra,
 	          rb,
 	          rd,
+	          idex_nop,
 	          idex_control,
 	          idex_opcode,
 	          idex_aluop,
@@ -196,7 +200,8 @@ module datapath(clk, rst);
 	          idex_rd);
 
 	/* EX-MEM register */
-	exmem exmem(clk,
+	exmem exmem(clk, nop,
+	            idex_nop,
 	            idex_control[`EXMEM_CONTROLSIZE-1:0],
 	            idex_opcode,
 	            idex_pc,
@@ -206,6 +211,7 @@ module datapath(clk, rst);
 	            idex_readreg2,
 	            flagstoset,
 	            idex_rd,
+	            exmem_nop,
 	            exmem_control,
 	            exmem_opcode,
 	            exmem_pc,
@@ -217,7 +223,8 @@ module datapath(clk, rst);
 	            exmem_rd);
 
 	/* MEM-WB register */
-	memwb memwb(clk,
+	memwb memwb(clk, nop,
+	            exmem_nop,
 	            exmem_control[`MEMWB_CONTROLSIZE-1:0],
 	            exmem_opcode,
 	            exmem_pc,
@@ -241,13 +248,15 @@ module datapath(clk, rst);
 
 	/* Hazard Detection Unit: decides whether to stall pipeline */
 	hazard hazard(stage, idex_control[`MEMREAD],
-	              opcode, memwb_opcode,
+	              opcode, idex_opcode, exmem_opcode,
 	              rn, rm, rd, idex_rd,
 	              stall);
 
 	/* Forwarding Unit: decides whether to forward when a data hazard occurs */
 	forward forward(exmem_control[`REGWRITE],
 	                memwb_control[`REGWRITE],
+	                exmem_opcode,
+	                exmem_opcode,
 	                idex_ra,
 	                idex_rb,
 	                exmem_rd,
@@ -280,9 +289,6 @@ module datapath(clk, rst);
 	                          readreg1,
 	                          readreg2);
 
-	/* Branch Control: control whether to branch */
-	branchcontrol branchcontrol(memwb_opcode, memwb_rd, memwb_readflags, memwb_zero, branch);
-
 	/* PC Adder: add extended data to pc */
 	pcadder pcadder(idex_pc, idex_extended, branchpc);
 
@@ -299,4 +305,7 @@ module datapath(clk, rst);
 
 	/* control the flags register */
 	flagsregister flagsreg(clk, rst, exmem_control[`SETFLAGS], exmem_flagstoset, readflags);
+
+	/* Branch Control: control whether to branch */
+	branchcontrol branchcontrol(memwb_opcode, memwb_rd, memwb_readflags, memwb_zero, branch);
 endmodule

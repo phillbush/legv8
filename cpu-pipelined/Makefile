@@ -42,6 +42,8 @@ rtl: netlist.png
 testbench.v: ${SRCS}
 	../tools/tbgen -v incdir=${INCLUDE} \
 	               -v dumplevel=3 \
+	               -v timeunit=ps \
+	               -v duration=1000 \
 	               dump:registerfile.registers:${REGDUMP} \
 	               dump:memdata.data:${MEMDUMP} \
 	               ${MAIN}.v \

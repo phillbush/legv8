@@ -1,9 +1,11 @@
 `include "bus.vh"
 
-module memwb(clk,
+module memwb(clk, nop, nopin,
              controlin,  opcodein,  pcin,  branchpcin,  aluresin,  movresin,  readmemin,  zeroin,  readflagsin,  rdin,
              controlout, opcodeout, pcout, branchpcout, aluresout, movresout, readmemout, zeroout, readflagsout, rdout);
 	input wire clk;
+	input wire nop;
+	input wire nopin;
 	input wire [`MEMWB_CONTROLSIZE-1:0] controlin;
 	input wire [`OPCODESIZE-1:0] opcodein;
 	input wire [`WORDSIZE-1:0] pcin;
@@ -14,6 +16,7 @@ module memwb(clk,
 	input wire zeroin;
 	input wire [`FLAGSIZE-1:0] readflagsin;
 	input wire [`REGADDRSIZE-1:0] rdin;
+	output reg nopout;
 	output reg [`MEMWB_CONTROLSIZE-1:0] controlout;
 	output reg [`OPCODESIZE-1:0] opcodeout;
 	output reg [`WORDSIZE-1:0] pcout;
@@ -27,7 +30,10 @@ module memwb(clk,
 
 	always @(posedge clk)
 	begin
-		controlout <= controlin;
+		if (nop || nopin)
+			controlout <= 'b0;
+		else
+			controlout <= controlin;
 		opcodeout    <= opcodein;
 		pcout        <= pcin;
 		branchpcout  <= branchpcin;

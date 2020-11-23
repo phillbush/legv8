@@ -1,10 +1,11 @@
 `include "bus.vh"
 
 module idex(clk, nop,
-            controlin,  opcodein,  aluopin,  movopin,  pcin,  readreg1in,  readreg2in,  extendedin,  shamtin,  rain,  rbin,  rdin,
-            controlout, opcodeout, aluopout, movopout, pcout, readreg1out, readreg2out, extendedout, shamtout, raout, rbout, rdout);
+            nopin, controlin,  opcodein,  aluopin,  movopin,  pcin,  readreg1in,  readreg2in,  extendedin,  shamtin,  rain,  rbin,  rdin,
+            nopout, controlout, opcodeout, aluopout, movopout, pcout, readreg1out, readreg2out, extendedout, shamtout, raout, rbout, rdout);
 	input wire clk;
 	input wire nop;
+	input wire nopin;
 	input wire [`IDEX_CONTROLSIZE-1:0] controlin;
 	input wire [`OPCODESIZE-1:0] opcodein;
 	input wire [`ALUOPSIZE-1:0] aluopin;
@@ -17,6 +18,7 @@ module idex(clk, nop,
 	input wire [`REGADDRSIZE-1:0] rain;
 	input wire [`REGADDRSIZE-1:0] rbin;
 	input wire [`REGADDRSIZE-1:0] rdin;
+	output reg nopout;
 	output reg [`IDEX_CONTROLSIZE-1:0] controlout;
 	output reg [`OPCODESIZE-1:0] opcodeout;
 	output reg [`ALUOPSIZE-1:0] aluopout;
@@ -32,10 +34,11 @@ module idex(clk, nop,
 
 	always @(posedge clk)
 	begin
-		if (nop)
-			controlout  <= 'b0;
+		if (nop || nopin)
+			controlout <= 'b0;
 		else
-			controlout  <= controlin;
+			controlout <= controlin;
+		nopout      <= nop | nopin;
 		opcodeout   <= opcodein;
 		aluopout    <= aluopin;
 		movopout    <= movopin;
