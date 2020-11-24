@@ -19,16 +19,11 @@ module registerfile(clk, reset, rn, rm, rd, in, wren, outn, outm);
 	assign outn = registers[rn];
 	assign outm = registers[rm];
 
-	/* zero registers */
-	initial
-		for (i = 0; i < 2**`REGADDRSIZE; i++)
-			registers[i] = {`WORDSIZE{1'b0}};
-
 	/* write on the positive edge of the clock */
 	always @(posedge clk or posedge reset)
 		if (reset)
 			for (i = 0; i < 2**`REGADDRSIZE; i++)
-				registers[i] = {`WORDSIZE{1'b0}};
+				registers[i] <= {`WORDSIZE{1'b0}};
 		else if (wren && rd != `XZR)
-			registers[rd] = in;
+			registers[rd] <= in;
 endmodule
