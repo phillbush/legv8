@@ -266,7 +266,7 @@ The following is a list of pseudo instructions supported by the assembler.
 * [x] LDA
 
 
-## HISTORY
+## IMPLEMENTATION
 
 A simpler LEGv8 processor is described at the Computer Organization and Design book.
 There are some differences between the processor implemented here and the one described in the book.
