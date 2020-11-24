@@ -25,12 +25,3 @@ loop_beg:
 	ADDI    X0, X0, 8
 	B       loop_beg
 loop_end:
-	/*
-	 * FIXME:
-	 * We need to have at least three instructions after a branch
-	 * instruction for the branch signal to be interpreted by the
-	 * pipelined CPU.  The single-cycle CPU works ok though.
-	 */
-	 ADD    XZR, XZR, XZR
-	 ADD    XZR, XZR, XZR
-	 ADD    XZR, XZR, XZR

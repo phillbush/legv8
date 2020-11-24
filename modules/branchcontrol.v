@@ -7,7 +7,7 @@ module branchcontrol(opcode, rd, flags, zero, branch);
 	input wire [`REGADDRSIZE-1:0] rd;
 	input wire [`FLAGSIZE-1:0] flags;
 	input wire zero;
-	output wire branch;
+	output reg branch;
 
 	wire flagbranch[0:15];
 	wire unconditional;
@@ -54,5 +54,10 @@ module branchcontrol(opcode, rd, flags, zero, branch);
 	                 && flagbranch[rd[3:0]];
 
 	/* set whether to branch */
-	assign branch = unconditional || conditional || flagbased;
+	always @(*) begin
+		if (unconditional || conditional || flagbased)
+			branch <= 1'b1;
+		else
+			branch <= 1'b0;
+	end
 endmodule

@@ -12,11 +12,16 @@ module hazard(stage, idex_memread, opcode, idex_opcode, exmem_opcode, rn, rm, rt
 	input wire [`REGADDRSIZE-1:0] rm;
 	input wire [`REGADDRSIZE-1:0] rt;
 	input wire [`REGADDRSIZE-1:0] idex_rd;
-	output wire stall;
+	output reg stall;
 
-	assign stall =  (stage > 3'b001)
-	             && idex_memread
-	             && ((rn == idex_rd)
-	             || (((opcode & `R_MASK) == `R_BITSET) && (rm == idex_rd))
-	             || (((opcode & `STUR_MASK) == `STUR_BITSET) && (rt == idex_rd)));
+	always @(*) begin
+		if ((stage > 3'b001)
+	           && idex_memread
+	           && ((rn == idex_rd)
+	           || (((opcode & `R_MASK) == `R_BITSET) && (rm == idex_rd))
+	           || (((opcode & `STUR_MASK) == `STUR_BITSET) && (rt == idex_rd))))
+			stall <= 1'b1;
+		else
+			stall <= 1'b0;
+	end
 endmodule
