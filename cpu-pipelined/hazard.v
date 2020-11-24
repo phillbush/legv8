@@ -2,7 +2,7 @@
 `include "opcode.vh"
 `include "registers.vh"
 
-module hazard(stage, idex_memread, opcode, idex_opcode, exmem_opcode, rn, rm, rt, idex_rd, stall);
+module hazard(stage, idex_memread, opcode, rn, rm, rt, idex_rd, stall);
 	input wire [`COUNTERSIZE-1:0] stage;
 	input wire idex_memread;
 	input wire [`OPCODESIZE-1:0] opcode;

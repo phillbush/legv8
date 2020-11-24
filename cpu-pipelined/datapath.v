@@ -247,8 +247,7 @@ module datapath(clk, rst);
 	            memwb_rd);
 
 	/* Hazard Detection Unit: decides whether to stall pipeline */
-	hazard hazard(stage, idex_control[`MEMREAD],
-	              opcode, idex_opcode, exmem_opcode,
+	hazard hazard(stage, idex_control[`MEMREAD], opcode,
 	              rn, rm, rd, idex_rd,
 	              stall);
 

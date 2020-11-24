@@ -55,7 +55,7 @@ module branchcontrol(opcode, rd, flags, zero, branch);
 
 	/* set whether to branch */
 	always @(*) begin
-		if (unconditional || conditional || flagbased)
+		if (unconditional | conditional | flagbased)
 			branch <= 1'b1;
 		else
 			branch <= 1'b0;
