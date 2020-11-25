@@ -136,23 +136,17 @@ module datapath(clk, rst);
 	assign forwardop = exmem_control[`REGSRC1:`REGSRC0] == `REGSRC_MOV ? exmem_movres : exmem_alures;
 
 	/* operand of the MOV Unit */
-	assign movoperand = ((stage == 3'b011) && forwarda[`FORWARDUSE])
-	                  ? forwardop
-	                  : (stage[2] && forwarda[`FORWARDUSE])
+	assign movoperand = forwarda[`FORWARDUSE]
 	                  ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
 	                  : idex_readreg2;
 
 	/* operands of the ALU */
-	assign alua = ((stage == 3'b011) && forwarda[`FORWARDUSE])
-	            ? forwardop
-	            : (stage[2] && forwarda[`FORWARDUSE])
+	assign alua = forwarda[`FORWARDUSE]
 	            ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
 	            : idex_readreg1;
 	assign alub = idex_control[`ALUSRC]
 	            ? idex_extended
-	            : ((stage == 3'b011) && forwardb[`FORWARDUSE])
-	            ? forwardop
-	            : (stage[2] && forwardb[`FORWARDUSE])
+	            : forwardb[`FORWARDUSE]
 	            ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
 	            : idex_readreg2;
 
@@ -252,10 +246,11 @@ module datapath(clk, rst);
 	              stall);
 
 	/* Forwarding Unit: decides whether to forward when a data hazard occurs */
-	forward forward(exmem_control[`REGWRITE],
+	forward forward(stage,
+	                exmem_control[`REGWRITE],
 	                memwb_control[`REGWRITE],
 	                exmem_opcode,
-	                exmem_opcode,
+	                memwb_opcode,
 	                idex_ra,
 	                idex_rb,
 	                exmem_rd,

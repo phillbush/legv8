@@ -3,9 +3,7 @@ Pipelined CPU with Hazard Detection and Forwarding
 
 This directory contains the modules implementing a five-stage pipelined LEGv8 CPU
 with hazard detection and data forwarding.
-This implementation does not do branch prediction;
-when a branching instruction is encountered, the execution of following instruction
-is interrupted until the branching is resolved.
+This implementation does not do branch prediction.
 
 ## FILES
 
@@ -61,7 +59,7 @@ Another technique to overcome hazards is to forward data.
 When data forwarding is used, data is forwarded from a pipeline register
 to a unit that uses that data as soon as it is available,
 before the instruction that generates the data completes.
-Data forwarding is performed by the data forwarding module.
+Data forwarding is controlled by the data forwarding module.
 
 
 ## SEE ALSO
