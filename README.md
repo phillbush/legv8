@@ -278,7 +278,7 @@ There are some differences between the processor implemented here and the one de
   Instead, the Shift Left 2 operation is done by the Sign-Extend module.
 
 * This implementation deals with all flags and flag-based branch instructions,
-  while the book's one only deals with the `zero` flag.
+  while the book's implementation only deals with the `zero` flag.
   There is a Flags Register module which stores flags.
   The ALU outputs a bus of flags to be set,
   and the Control Unit outputs a control signal, called `SETFLAGS`, specifying whether the
@@ -288,7 +288,7 @@ There are some differences between the processor implemented here and the one de
   For this, it is needed a new module, called the MOV Unit module.
 
 * This implementation of the pipelined CPU decides whether to branch on the write-back stage.
-  The book, however, decides whether to branch one stage earlier (on the memory access stage).
+  The book, however, decides whether to branch one stage earlier, on the memory access stage.
   It's done later here because we need the flags read from the Flags Register
   (which is read on the memory access stage) in order to decide whether to branch.
 
@@ -324,6 +324,14 @@ In addition, the Control Unit implemented here outputs more control signals than
   the MOV result (for moving instructions);
   the memory (for `STUR` instructions);
   or the PC (for the `BL` instruction).
+
+
+## TODO
+
+* Decrease the number of bits of the ALU contrl signal from 6 to 5.
+* Reuse the ALU to add the PC to the extended signal (and thus remove `modules/pcadder.v`).
+* Remove the need for passing the opcode from the ID stage to later stages
+  (maybe by increasing the number of control signals?).
 
 
 ## SEE ALSO
