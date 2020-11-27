@@ -75,7 +75,6 @@ module datapath(clk, rst);
 	wire [`WORDSIZE-1:0] forwardop;         /* forward operand */
 	wire [`WORDSIZE-1:0] forwardeda;        /* forwarded operand a */
 	wire [`WORDSIZE-1:0] forwardedb;        /* forwarded operand b */
-	wire [`WORDSIZE-1:0] movoperand;        /* operand of the mov */
 	wire [`WORDSIZE-1:0] alua;              /* operand A of the alu */
 	wire [`WORDSIZE-1:0] alub;              /* operand b of the alu */
 	wire [`WORDSIZE-1:0] alures;            /* result of the alu */
@@ -140,18 +139,9 @@ module datapath(clk, rst);
 	                  ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
 	                  : idex_readreg2;
 
-	/* operand of the MOV Unit */
-	assign movoperand = forwarda[`FORWARDUSE]
-	                  ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
-	                  : idex_readreg2;
-
 	/* operands of the ALU */
-	assign alua = idex_control[`ALU1SRC]
-	            ? idex_pc
-	            : forwardeda;
-	assign alub = idex_control[`ALU2SRC]
-	            ? idex_extended
-	            : forwardedb;
+	assign alua = idex_control[`ALU1SRC] ? idex_pc : forwardeda;
+	assign alub = idex_control[`ALU2SRC] ? idex_extended : forwardedb;
 
 	/* data to be written back on the registers */
 	assign writereg = memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_PC ? memwb_pc
@@ -283,7 +273,7 @@ module datapath(clk, rst);
 	                          readreg2);
 
 	/* MOV Unit: how many bits to shift the second alu operand */
-	mov mov(movoperand, idex_extended, idex_movop, movres);
+	mov mov(forwardedb, idex_extended, idex_movop, movres);
 
 	/* Arithmetic-Logic Unit: perform operation specified in aluop */
 	alu alu(alua, alub, idex_shamt, idex_aluop, alures, flagstoset);

@@ -332,6 +332,7 @@ In addition, the Control Unit implemented here outputs more control signals than
 * [x] Reuse the ALU to add the PC to the extended signal (and thus remove `modules/pcadder.v`).
 * [ ] Remove the need for passing the opcode from the ID stage to later stages
       (maybe by increasing the number of control signals?).
+* [ ] Add a mux from both `alures` and `movres` to a single `res`.
 
 
 ## SEE ALSO
