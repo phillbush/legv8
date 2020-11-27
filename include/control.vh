@@ -1,11 +1,12 @@
 /* control bits output by the control unit */
-`define CONTROLSIZE             9
-`define REG1LOC                 8
-`define REG2LOC                 7
+`define CONTROLSIZE             10
+`define REG1LOC                 9
+`define REG2LOC                 8
 
 /* control bits passed from ID stage to EX stage */
-`define IDEX_CONTROLSIZE        7
-`define ALUSRC                  6
+`define IDEX_CONTROLSIZE        8
+`define ALU1SRC                 7
+`define ALU2SRC                 6
 
 /* control bits passed from EX stage to MEM stage */
 `define EXMEM_CONTROLSIZE       6

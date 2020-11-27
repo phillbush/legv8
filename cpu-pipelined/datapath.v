@@ -72,8 +72,9 @@ module datapath(clk, rst);
 
 	/* wires for EX stage */
 	wire exmem_nop;
-	wire [`WORDSIZE-1:0] branchpc;
 	wire [`WORDSIZE-1:0] forwardop;         /* forward operand */
+	wire [`WORDSIZE-1:0] forwardeda;        /* forwarded operand a */
+	wire [`WORDSIZE-1:0] forwardedb;        /* forwarded operand b */
 	wire [`WORDSIZE-1:0] movoperand;        /* operand of the mov */
 	wire [`WORDSIZE-1:0] alua;              /* operand A of the alu */
 	wire [`WORDSIZE-1:0] alub;              /* operand b of the alu */
@@ -85,7 +86,6 @@ module datapath(clk, rst);
 	wire [`EXMEM_CONTROLSIZE-1:0] exmem_control;
 	wire [`OPCODESIZE-1:0] exmem_opcode;
 	wire [`WORDSIZE-1:0] exmem_pc;
-	wire [`WORDSIZE-1:0] exmem_branchpc;
 	wire [`WORDSIZE-1:0] exmem_alures;
 	wire [`WORDSIZE-1:0] exmem_movres;
 	wire [`WORDSIZE-1:0] exmem_readreg2;
@@ -100,13 +100,12 @@ module datapath(clk, rst);
 	wire [`MEMWB_CONTROLSIZE-1:0] memwb_control;
 	wire [`OPCODESIZE-1:0] memwb_opcode;
 	wire [`WORDSIZE-1:0] memwb_pc;
-	wire [`WORDSIZE-1:0] memwb_branchpc;
 	wire [`WORDSIZE-1:0] memwb_readmem;
 	wire [`WORDSIZE-1:0] memwb_alures;
 	wire [`WORDSIZE-1:0] memwb_movres;
+	wire [`WORDSIZE-1:0] memwb_readreg2;
 	wire [`FLAGSIZE-1:0] memwb_readflags;
 	wire [`REGADDRSIZE-1:0] memwb_rd;
-	wire memwb_zero;
 
 	/* wires for WB stage */
 	wire branch;
@@ -134,6 +133,12 @@ module datapath(clk, rst);
 
 	/* forwarding operand */
 	assign forwardop = exmem_control[`REGSRC1:`REGSRC0] == `REGSRC_MOV ? exmem_movres : exmem_alures;
+	assign forwardeda = forwarda[`FORWARDUSE]
+	                  ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
+	                  : idex_readreg1;
+	assign forwardedb = forwardb[`FORWARDUSE]
+	                  ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
+	                  : idex_readreg2;
 
 	/* operand of the MOV Unit */
 	assign movoperand = forwarda[`FORWARDUSE]
@@ -141,14 +146,12 @@ module datapath(clk, rst);
 	                  : idex_readreg2;
 
 	/* operands of the ALU */
-	assign alua = forwarda[`FORWARDUSE]
-	            ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
-	            : idex_readreg1;
-	assign alub = idex_control[`ALUSRC]
+	assign alua = idex_control[`ALU1SRC]
+	            ? idex_pc
+	            : forwardeda;
+	assign alub = idex_control[`ALU2SRC]
 	            ? idex_extended
-	            : forwardb[`FORWARDUSE]
-	            ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
-	            : idex_readreg2;
+	            : forwardedb;
 
 	/* data to be written back on the registers */
 	assign writereg = memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_PC ? memwb_pc
@@ -199,17 +202,15 @@ module datapath(clk, rst);
 	            idex_control[`EXMEM_CONTROLSIZE-1:0],
 	            idex_opcode,
 	            idex_pc,
-	            branchpc,
 	            alures,
 	            movres,
-	            idex_readreg2,
+	            forwardedb,
 	            flagstoset,
 	            idex_rd,
 	            exmem_nop,
 	            exmem_control,
 	            exmem_opcode,
 	            exmem_pc,
-	            exmem_branchpc,
 	            exmem_alures,
 	            exmem_movres,
 	            exmem_readreg2,
@@ -222,21 +223,19 @@ module datapath(clk, rst);
 	            exmem_control[`MEMWB_CONTROLSIZE-1:0],
 	            exmem_opcode,
 	            exmem_pc,
-	            exmem_branchpc,
 	            exmem_alures,
 	            exmem_movres,
 	            readmem,
-	            exmem_flagstoset[`ZERO],
+	            exmem_readreg2,
 	            readflags,
 	            exmem_rd,
 	            memwb_control,
 	            memwb_opcode,
 	            memwb_pc,
-	            memwb_branchpc,
 	            memwb_alures,
 	            memwb_movres,
 	            memwb_readmem,
-	            memwb_zero,
+	            memwb_readreg2,
 	            memwb_readflags,
 	            memwb_rd);
 
@@ -261,7 +260,7 @@ module datapath(clk, rst);
 	/* Program Counter: get address of next instruction */
 	programcounter programcounter(clk, rst, stall,
 	                              (stage[2] ? branch : 1'b0),
-	                              memwb_branchpc,
+	                              memwb_alures,
 	                              pc);
 
 	/* Program Memory: get instruction from the address in the program counter */
@@ -283,9 +282,6 @@ module datapath(clk, rst);
 	                          readreg1,
 	                          readreg2);
 
-	/* PC Adder: add extended data to pc */
-	pcadder pcadder(idex_pc, idex_extended, branchpc);
-
 	/* MOV Unit: how many bits to shift the second alu operand */
 	mov mov(movoperand, idex_extended, idex_movop, movres);
 
@@ -301,5 +297,5 @@ module datapath(clk, rst);
 	flagsregister flagsreg(clk, rst, exmem_control[`SETFLAGS], exmem_flagstoset, readflags);
 
 	/* Branch Control: control whether to branch */
-	branchcontrol branchcontrol(memwb_opcode, memwb_rd, memwb_readflags, memwb_zero, branch);
+	branchcontrol branchcontrol(memwb_opcode, memwb_readreg2, memwb_rd, memwb_readflags, branch);
 endmodule

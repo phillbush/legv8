@@ -328,10 +328,10 @@ In addition, the Control Unit implemented here outputs more control signals than
 
 ## TODO
 
-* Decrease the number of bits of the ALU contrl signal from 6 to 5.
-* Reuse the ALU to add the PC to the extended signal (and thus remove `modules/pcadder.v`).
-* Remove the need for passing the opcode from the ID stage to later stages
-  (maybe by increasing the number of control signals?).
+* [ ] Decrease the number of bits of the ALU contrl signal from 6 to 5.
+* [x] Reuse the ALU to add the PC to the extended signal (and thus remove `modules/pcadder.v`).
+* [ ] Remove the need for passing the opcode from the ID stage to later stages
+      (maybe by increasing the number of control signals?).
 
 
 ## SEE ALSO

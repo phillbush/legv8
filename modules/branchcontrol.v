@@ -2,21 +2,25 @@
 `include "flags.vh"
 `include "opcode.vh"
 
-module branchcontrol(opcode, rd, flags, zero, branch);
+module branchcontrol(opcode, readreg2, rd, flags, branch);
 	input wire [`OPCODESIZE-1:0] opcode;
+	input wire [`WORDSIZE-1:0] readreg2;
 	input wire [`REGADDRSIZE-1:0] rd;
 	input wire [`FLAGSIZE-1:0] flags;
-	input wire zero;
 	output reg branch;
 
 	wire flagbranch[0:15];
 	wire unconditional;
 	wire conditional;
 	wire flagbased;
+	wire zero;
 	wire n;
 	wire z;
 	wire v;
 	wire c;
+
+	/* get whether readreg2 is zero */
+	assign zero = ~(|readreg2);
 
 	/* disassemble the flags */
 	assign n = flags[3];

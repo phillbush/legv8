@@ -23,7 +23,6 @@ SRCS = ${MAIN}.v \
        ../modules/memdata.v \
        ../modules/memprog.v \
        ../modules/mov.v \
-       ../modules/pcadder.v \
        ../modules/programcounter.v \
        ../modules/registerfile.v \
        ../modules/signextension.v

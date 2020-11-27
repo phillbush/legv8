@@ -27,10 +27,14 @@ module controlunit(opcode, control, aluop, movop);
 	/* control whether to write into data memory */
 	assign control[`MEMWRITE] = (opcode & `STUR_MASK) == `STUR_BITSET;
 
-	/* control whether second operand of ALU is comes from register or from sign-extension */
-	assign control[`ALUSRC] =  (opcode & `LDUR_MASK) == `LDUR_BITSET
-	                        || (opcode & `STUR_MASK) == `STUR_BITSET
-	                        || (opcode & `I_MASK) == `I_BITSET;
+	/* control whether first operand of ALU comes from register or from PC */
+	assign control[`ALU1SRC] = (opcode & `BRANCH_MASK) == `BRANCH_BITSET;
+
+	/* control whether second operand of ALU comes from register or from sign-extension */
+	assign control[`ALU2SRC] =  (opcode & `LDUR_MASK) == `LDUR_BITSET
+	                         || (opcode & `STUR_MASK) == `STUR_BITSET
+	                         || (opcode & `I_MASK) == `I_BITSET
+	                         || (opcode & `BRANCH_MASK) == `BRANCH_BITSET;
 
 	/* control the operation to be performed by MOV */
 	movcontrol movcontrol(opcode, movop);
@@ -101,11 +105,10 @@ module alucontrol(opcode, aluop, setflags);
 	                 : `ALUOP_ADD;
 
 	/* the two LSB of the ALU operation */
-	assign alu_op = ((opcode & `CB_MASK) == `CB_BITSET
-	              || (opcode & `SHIFT_MASK) == `SHIFT_BITSET
-	              || (opcode & `BFLAG_MASK) == `BFLAG_BITSET) ? `ALUOP_ORR
-	              : ((opcode & `R_MASK) == `R_BITSET
-	              || (opcode & `I_MASK) == `I_BITSET) ? alu_op_ri
+	assign alu_op = (opcode & `SHIFT_MASK) == `SHIFT_BITSET
+	              ? `ALUOP_ORR
+	              : ((opcode & `R_MASK) == `R_BITSET || (opcode & `I_MASK) == `I_BITSET)
+	              ? alu_op_ri
 	              : `ALUOP_ADD;
 
 	/* compose aluop from its elements */

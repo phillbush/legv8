@@ -11,7 +11,6 @@ module datapath(clk, rst);
 
 	/* wires for internal registers */
 	wire [`WORDSIZE-1:0] pc;                /* program counter */
-	wire [`WORDSIZE-1:0] branchpc;          /* program counter plus extended data */
 	wire [`FLAGSIZE-1:0] flags;             /* alu flags */
 
 	/* the instruction and its parts */
@@ -38,7 +37,8 @@ module datapath(clk, rst);
 	wire memread;           /* whether to write from data memory */
 	wire memwrite;          /* whether to write into data memory */
 	wire setflags;          /* whether to set flags */
-	wire alusrc;            /* whether 2nd ALU operand is second register read or extension */
+	wire alu1src;           /* whether 1nd ALU operand is first register read or PC */
+	wire alu2src;           /* whether 2nd ALU operand is second register read or extension */
 	wire regwrite;          /* whether to write on register file */
 	wire [1:0] regsrc;      /* where the data to be written into register comes from */
 	wire [`ALUOPSIZE-1:0] aluop;
@@ -59,7 +59,8 @@ module datapath(clk, rst);
 	assign memread = control[`MEMREAD];
 	assign memwrite = control[`MEMWRITE];
 	assign setflags = control[`SETFLAGS];
-	assign alusrc = control[`ALUSRC];
+	assign alu1src = control[`ALU1SRC];
+	assign alu2src = control[`ALU2SRC];
 	assign regwrite = control[`REGWRITE];
 	assign regsrc = control[`REGSRC1:`REGSRC0];
 
@@ -70,7 +71,7 @@ module datapath(clk, rst);
 	                : alures;
 
 	/* compute program counter at each clock posedge */
-	programcounter progcount(clk, rst, 1'b0, branch, branchpc, pc);
+	programcounter progcount(clk, rst, 1'b0, branch, alures, pc);
 
 	/* get instruction from the address in the program counter */
 	memprog memprog(pc, instruction);
@@ -91,22 +92,19 @@ module datapath(clk, rst);
 	                          readreg1,
 	                          readreg2);
 
-	/* sum pc with extended data */
-	pcadder pcadder(pc, extended, branchpc);
-
 	/* how many bits to shift the second alu operand */
 	mov mov(readreg2, extended, movop, movres);
 
 	/* the arithmetic-logic unit */
-	alu alu(readreg1,
-	        (alusrc ? extended : readreg2),
+	alu alu((alu1src ? pc : readreg1),
+	        (alu2src ? extended : readreg2),
 	        shamt,
 	        aluop,
 	        alures,
 	        flagstoset);
 
 	/* set the control signals and the alu operation */
-	branchcontrol branchcontrol(opcode, rd, flags, flagstoset[`ZERO], branch);
+	branchcontrol branchcontrol(opcode, readreg2, rd, flags, branch);
 
 	/* control the flags register */
 	flagsregister flagsreg(clk, rst, setflags, flagstoset, flags);
