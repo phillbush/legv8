@@ -23,9 +23,6 @@ module signextension(instruction, long);
 
 	assign b_addr = {{36{short[25]}}, short[25:0], 2'b0};
 
-	/*
-	 * Addres for conditional branch instructions.
-	 */
 	assign cb_addr = {{43{short[23]}}, short[23:5], 2'b0};
 
 	assign dt_addr = {{55{short[20]}}, short[20:12]};

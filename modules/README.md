@@ -38,78 +38,139 @@ all the combinational circuits are described using only plain combinational assi
 * `signextension.v`:    The Sign Extension module.
 
 
-## Description
+## MEMORIES
 
-**The Program Counter Module.**
-The program counter module is a sequential circuit
-that maintains the program counter register,
-that is used to fetch the current instruction.
-In addition to the clock and reset inputs,
-this module receives a control signal called *branch*
-that defines whether the program counter will point to the next instruction
-or will “jump” to another instruction.
+To simplify the design, this CPU uses the Harvard memory architecture.
+This architecture uses two memories:
+one for the program itself (the program memory),
+and another for the data the program uses (the data memory).
+There are thus one module for each memory:
+the *Program Memory module* and the *Data Memory module*.
+Both memory modules are sequential circuits that receives the clock and reset signals
+and that are initialized to the contents of a previously assembled program.
 
-**The Program Memory Module.**
-The program memory module is a sequential circuit
-that maintains the program memory, also known as instruction memory.
-In addition to the clock and reset inputs,
-this module receives an address from the program counter and outputs the instruction at this address.
-This instruction is decomposed by the datapath in five parts:
-the opcode, the shamt, and three register address (called *Rm*, *Rn*, and *Rd*).
+**Program Memory.**
+The program memory cannot be written.
+One can only read one data at a time on the address provided.
+The address to be read is provided by the *Program Counter module*.
 
-**The Control Unit Module.**
-The control unit module receives the opcode as input,
-and outputs every control signal that are used by other modules
-to control whether data are written or read.
-The control signals are also used by the datapath
-to control the flow of the data and whether
-the program counter “jumps” to another instruction.
+**Data Memory.**
+The data memory can be either read or written, but not both at the same time.
+The address to be read or written to is provided by the *ALU*.
+The operation (that is, whether the memory will be read or written) is defined by the *Control Unit*.
 
-**The Sign Extension Module.**
-The sign extension module extends part of the instruction according to the opcode.
-The extended signal, called *extended*, is directed both to the program counter module
-(indicating the offset of the next instruction to be jumped to),
-and to the ALU (indicating a immediate operand).
 
-**The Register File Module.**
-The register file module is a sequential circuit
-that maintains the register file, also known as register bank,
-an array of 32 registers of 64 bits each.
-In addition to the clock and reset inputs,
-this module receives three register addresses, a data to be written,
-and a control signal defining whether this data should be written into the register file.
-This module outputs two data values read from the register file.
+## REGISTERS
 
-**The Arithmetic Logic Unit (ALU).**
-The Arithmetic Logic Unit (ALU) receives three operands
-and a control signal that defines which operation must be realized upon the operands.
-The operands can be data read from the register file,
-or data output by the sign extension module.
-The ALU also outputs four flags that can be written into the flags register.
-The data result from the operation can be then written back into the register file,
-or can be written into the memory,
-depending on the control signals.
+The processor has some internally used registers implemented as sequential circuit modules.
+All internally used registers receive as input the clock and reset signals.
 
-**The Move Unit**
-The move unit receives two operands
+**Program Counter.**
+This module maintains a single 64-bit register called *program counter*,
+that is used as the address of the program memory to fetch the current instruction from.
+This module receives a control signal called `branch`
+that defines whether the program counter should point to another instruction
+rather than to the next one.
+It also receives an offset to be added into the program counter in case of branch.
+
+**Register File.**
+This module maintains an array of 32 registers of 64 bits each;
+this array is indexed by a 5-bit index.
+This module can read two registers and write into another at the same time.
+It receives a control signal defining whether the write will occur
+(the reads will always occur, but the write will only occur when this control signal is on).
+It also receives the indices of the registers to be read,
+the index of the register to be written to,
+and the 64-bit data to be written.
+
+**Flag Register.**
+This module maintain a 4-bit register of flags.
+Flags are output by the *ALU* and are used by certain branch instructions to define whether to breanch.
+This module receives the flags to be written,
+and a control signal defining whether to write or not.
+This module always output the current flags.
+
+
+## SIGN EXTENSION UNIT
+
+The sign extension unit is a module that extends part of the instruction according to its opcode.
+The extended signal, called *extended*, is used both as a offset to be added to the *PC*,
+or as an immediate to be used as operand on the *ALU* or *MOV* modules.
+
+
+## OPERATIONAL UNITS
+
+The processor uses two operational units to perform operations on data:
+the *Arithmetic Logic Unit* (*ALU*) and the *Movement Unit* (*MOV*).
+
+**Move Unit.**
+This module receives two operands
 and a control signal that defines how the bits of both operand will be merged one into the other.
 The data result from the move unit can then be written back into the register file,
 depending on the control signals.
 
-**The Flag Register Module.**
-The flag register module is a sequential circuit
-that maintains the flag register,
-a register used by conditional branch instructions.
-In addition to the clock and reset inputs,
-this module receives the flags to be written,
-and a control signal that defines whether those flags must be written into the flags register.
-This module outputs the flags stored in the flag register.
+**Arithmetic Logic Unit (ALU).**
+This module receives three operands
+and a 6-bit control signal that defines which operation must be realized upon the operands.
+The operands can be data read from the register file,
+or data output by the sign extension module.
+The ALU outputs both the result of the operation,
+and the four flags that can be written into the flags register.
+Each of the six bits that define the operation to be realized is explained below.
 
-**The Data Memory Module.**
-The data memory module is a sequential circuit
-that maintains the data memory, which contains the data used by the program.
-In addition to the clock and reset inputs,
-this module receives an address of the data to be written into or read from the data memory,
-and a data to be written.
-It also receives two control signals thad defines whether data should be read or written.
-This module outputs the data read from the data memory.
+
+## CONTROL UNITS
+
+The processor uses two control units that output control signals,
+which will be used by other modules and by multiplexors through the datapath.
+There is the *Main Control Unit* (often abbreviated to *Control Unit*),
+and the *Branch Control Unit*.
+
+**Main Control Unit.**
+This module receives the opcode as input,
+and outputs every control signal that are used by other modules
+to control multiplexors and whether data are written or read.
+The following control signals are output by this module.
+
+* **`REG1LOC`:**
+  Controls the mux deciding whether
+  the first register index to be read from the register file
+  is the `Rn` part of the instruction or the register `X31`.
+* **`REG2LOC`:**
+  Controls the mux deciding whether
+  the second register index to be read from the register file
+  is the `Rm` part of the instruction or the `Rt` part of the instruction.
+* **`USEMOV`:**
+  Controls the mux deciding whether
+  to use the result of the *MOV* rather than the result of the *ALU*.
+* **`ALU1SRC`:**
+  Controls the mux deciding whether
+  the first operand of the *ALU* is the first register read from the register file
+  or the address at the *PC* register.
+* **`ALU2SRC`:**
+  Controls the mux deciding whether
+  the second operand of the *ALU* is the second register read from the register file
+  or the data extended by the sign extension module.
+* **`SETFLAGS`:**
+  Controls whether the flags output by the *ALU* should be written into the flags register.
+* **`MEMREAD`:**
+  Controls whether the data memory should be read.
+* **`MEMWRITE`:**
+  Controls whether the data memory should be written.
+* **`REGWRITE`:**
+  Controls whether a given data should be written back into the register file.
+* **`PCTOREG`:**
+  Controls the mux deciding whether
+  the data to be written back into the register file is the current address at the *PC* register.
+* **`MEMTOREG`:**
+  Controls the mux deciding whether
+  the data to be written back into the register file is the data read from memory.
+
+**Branch Control Unit.**
+This module receives the instruction's opcode,
+the second data read from the registers,
+the `Rd` part of the instruction,
+and the flags read from the flags register.
+All this data input to the Branch Control Unit is used to determine whether
+the *PC* should be updated to the address output by the *ALU*
+(this address is the current *PC* added to an offset).
