@@ -72,21 +72,20 @@ module datapath(clk, rst);
 
 	/* wires for EX stage */
 	wire exmem_nop;
-	wire [`WORDSIZE-1:0] forwardop;         /* forward operand */
 	wire [`WORDSIZE-1:0] forwardeda;        /* forwarded operand a */
 	wire [`WORDSIZE-1:0] forwardedb;        /* forwarded operand b */
 	wire [`WORDSIZE-1:0] alua;              /* operand A of the alu */
 	wire [`WORDSIZE-1:0] alub;              /* operand b of the alu */
 	wire [`WORDSIZE-1:0] alures;            /* result of the alu */
 	wire [`WORDSIZE-1:0] movres;            /* result of the mov module */
+	wire [`WORDSIZE-1:0] res;               /* result of the alu/mov */
 	wire [`FLAGSIZE-1:0] flagstoset;
 
 	/* wires for EX-MEM register */
 	wire [`EXMEM_CONTROLSIZE-1:0] exmem_control;
 	wire [`OPCODESIZE-1:0] exmem_opcode;
 	wire [`WORDSIZE-1:0] exmem_pc;
-	wire [`WORDSIZE-1:0] exmem_alures;
-	wire [`WORDSIZE-1:0] exmem_movres;
+	wire [`WORDSIZE-1:0] exmem_res;
 	wire [`WORDSIZE-1:0] exmem_readreg2;
 	wire [`FLAGSIZE-1:0] exmem_flagstoset;
 	wire [`REGADDRSIZE-1:0] exmem_rd;
@@ -100,8 +99,7 @@ module datapath(clk, rst);
 	wire [`OPCODESIZE-1:0] memwb_opcode;
 	wire [`WORDSIZE-1:0] memwb_pc;
 	wire [`WORDSIZE-1:0] memwb_readmem;
-	wire [`WORDSIZE-1:0] memwb_alures;
-	wire [`WORDSIZE-1:0] memwb_movres;
+	wire [`WORDSIZE-1:0] memwb_res;
 	wire [`WORDSIZE-1:0] memwb_readreg2;
 	wire [`FLAGSIZE-1:0] memwb_readflags;
 	wire [`REGADDRSIZE-1:0] memwb_rd;
@@ -130,13 +128,15 @@ module datapath(clk, rst);
 	assign ra = control[`REG1LOC] ? `XZR : rn;
 	assign rb = control[`REG2LOC] ? rd : rm;
 
+	/* get result of EX stage */
+	assign res = idex_control[`USEMOV] ? movres : alures;
+
 	/* forwarding operand */
-	assign forwardop = exmem_control[`REGSRC1:`REGSRC0] == `REGSRC_MOV ? exmem_movres : exmem_alures;
 	assign forwardeda = forwarda[`FORWARDUSE]
-	                  ? (forwarda[`FORWARDSRC] ? forwardop : writereg)
+	                  ? (forwarda[`FORWARDSRC] ? exmem_res : writereg)
 	                  : idex_readreg1;
 	assign forwardedb = forwardb[`FORWARDUSE]
-	                  ? (forwardb[`FORWARDSRC] ? forwardop : writereg)
+	                  ? (forwardb[`FORWARDSRC] ? exmem_res : writereg)
 	                  : idex_readreg2;
 
 	/* operands of the ALU */
@@ -144,10 +144,9 @@ module datapath(clk, rst);
 	assign alub = idex_control[`ALU2SRC] ? idex_extended : forwardedb;
 
 	/* data to be written back on the registers */
-	assign writereg = memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_PC ? memwb_pc
-	                : memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_MOV ? memwb_movres
-	                : memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_MEM ? memwb_readmem
-	                : memwb_alures;
+	assign writereg = memwb_control[`PCTOREG] ? memwb_pc
+	                : memwb_control[`MEMTOREG] ? memwb_readmem
+	                : memwb_res;
 
 	/* count stages */
 	always @(posedge clk)
@@ -192,8 +191,7 @@ module datapath(clk, rst);
 	            idex_control[`EXMEM_CONTROLSIZE-1:0],
 	            idex_opcode,
 	            idex_pc,
-	            alures,
-	            movres,
+	            res,
 	            forwardedb,
 	            flagstoset,
 	            idex_rd,
@@ -201,8 +199,7 @@ module datapath(clk, rst);
 	            exmem_control,
 	            exmem_opcode,
 	            exmem_pc,
-	            exmem_alures,
-	            exmem_movres,
+	            exmem_res,
 	            exmem_readreg2,
 	            exmem_flagstoset,
 	            exmem_rd);
@@ -213,8 +210,7 @@ module datapath(clk, rst);
 	            exmem_control[`MEMWB_CONTROLSIZE-1:0],
 	            exmem_opcode,
 	            exmem_pc,
-	            exmem_alures,
-	            exmem_movres,
+	            exmem_res,
 	            readmem,
 	            exmem_readreg2,
 	            readflags,
@@ -222,8 +218,7 @@ module datapath(clk, rst);
 	            memwb_control,
 	            memwb_opcode,
 	            memwb_pc,
-	            memwb_alures,
-	            memwb_movres,
+	            memwb_res,
 	            memwb_readmem,
 	            memwb_readreg2,
 	            memwb_readflags,
@@ -250,7 +245,7 @@ module datapath(clk, rst);
 	/* Program Counter: get address of next instruction */
 	programcounter programcounter(clk, rst, stall,
 	                              (stage[2] ? branch : 1'b0),
-	                              memwb_alures,
+	                              memwb_res,
 	                              pc);
 
 	/* Program Memory: get instruction from the address in the program counter */
@@ -266,7 +261,7 @@ module datapath(clk, rst);
 	registerfile registerfile(clk, rst,
 	                          ra,
 	                          rb,
-	                          (memwb_control[`REGSRC1:`REGSRC0] == `REGSRC_PC ? `XLR : memwb_rd),
+	                          (memwb_control[`PCTOREG] ? `XLR : memwb_rd),
 	                          writereg,
 	                          memwb_control[`REGWRITE],
 	                          readreg1,
@@ -279,7 +274,7 @@ module datapath(clk, rst);
 	alu alu(alua, alub, idex_shamt, idex_aluop, alures, flagstoset);
 
 	/* read and write data from/into the memory */
-	memdata memdata(clk, rst, exmem_alures, exmem_readreg2,
+	memdata memdata(clk, rst, exmem_res, exmem_readreg2,
 	                exmem_control[`MEMREAD], exmem_control[`MEMWRITE],
 	                readmem);
 

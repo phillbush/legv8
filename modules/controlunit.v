@@ -37,23 +37,25 @@ module controlunit(opcode, control, aluop, movop);
 	                         || (opcode & `BRANCH_MASK) == `BRANCH_BITSET;
 
 	/* control the operation to be performed by MOV */
-	movcontrol movcontrol(opcode, movop);
+	movcontrol movcontrol(opcode, movop, control[`USEMOV]);
 
 	/* control the operation to be performed by ALU */
 	alucontrol alucontrol(opcode, aluop, control[`SETFLAGS]);
 
 	/* control where data to be written into the register file comes from */
-	regsrccontrol regsrccontrol(opcode, control[`REGSRC1:`REGSRC0], control[`REGWRITE]);
+	regsrccontrol regsrccontrol(opcode, control[`PCTOREG], control[`MEMTOREG], control[`REGWRITE]);
 endmodule
 
-module movcontrol(opcode, movop);
+module movcontrol(opcode, movop, usemov);
 	input wire [`OPCODESIZE-1:0] opcode;
 	output wire [`MOVOPSIZE-1:0] movop;
+	output wire usemov;
 
 	wire movkeep;
 
-	assign movkeep = (opcode & `MOV_MASK) == `MOV_BITSET
-	               && opcode[`OPCODESIZE-3];
+	assign usemov = (opcode & `MOV_MASK) == `MOV_BITSET;
+
+	assign movkeep = usemov && opcode[`OPCODESIZE-3];
 
 	assign movop = {movkeep, opcode[1:0]};
 endmodule
@@ -122,28 +124,20 @@ module alucontrol(opcode, aluop, setflags);
 	                ||  (ri_upper == 'b111 && ri_lower == 'b100));  /* SUB(I)S */
 endmodule
 
-module regsrccontrol(opcode, regsrc, regwrite);
+module regsrccontrol(opcode, pctoreg, memtoreg, regwrite);
 	input wire [`OPCODESIZE-1:0] opcode;
-	output wire [1:0] regsrc;
 	output wire regwrite;
+	output wire pctoreg;
+	output wire memtoreg;
+	wire restoreg;
 
-	wire regsrc_alu;
-	wire regsrc_mem;
-	wire regsrc_mov;
-	wire regsrc_pc;
-
-	assign regsrc_pc = (opcode & `B_MASK) == `B_BITSET && opcode[`OPCODESIZE-1];
-	assign regsrc_mov = (opcode & `MOV_MASK) == `MOV_BITSET;
-	assign regsrc_mem = (opcode & `LDUR_MASK) == `LDUR_BITSET;
-	assign regsrc_alu =  (opcode & `SHIFT_MASK) == `SHIFT_BITSET
-	                  || (opcode & `R_MASK) == `R_BITSET
-	                  || (opcode & `I_MASK) == `I_BITSET;
-
-	assign regsrc = regsrc_pc ? `REGSRC_PC
-	              : regsrc_mov ? `REGSRC_MOV
-	              : regsrc_mem ? `REGSRC_MEM
-	              : `REGSRC_ALU;
+	assign pctoreg  = (opcode & `B_MASK) == `B_BITSET && opcode[`OPCODESIZE-1];
+	assign memtoreg = (opcode & `LDUR_MASK) == `LDUR_BITSET;
+	assign restoreg =  (opcode & `MOV_MASK) == `MOV_BITSET
+	                || (opcode & `SHIFT_MASK) == `SHIFT_BITSET
+	                || (opcode & `R_MASK) == `R_BITSET
+	                || (opcode & `I_MASK) == `I_BITSET;
 
 	/* control whether writing into the registers file is enabled */
-	assign regwrite = regsrc_mem | regsrc_mov | regsrc_alu | regsrc_pc;
+	assign regwrite = pctoreg | memtoreg | restoreg;
 endmodule

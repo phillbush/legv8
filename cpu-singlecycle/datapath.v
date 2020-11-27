@@ -28,6 +28,7 @@ module datapath(clk, rst);
 	wire [`WORDSIZE-1:0] readmem;           /* data of read from memory */
 	wire [`WORDSIZE-1:0] alures;            /* result of the alu */
 	wire [`WORDSIZE-1:0] movres;            /* result of the mov module */
+	wire [`WORDSIZE-1:0] res;               /* result of the alu/mov */
 	wire [`WORDSIZE-1:0] extended;          /* output of sign-extension */
 
 	/* control signals */
@@ -37,10 +38,12 @@ module datapath(clk, rst);
 	wire memread;           /* whether to write from data memory */
 	wire memwrite;          /* whether to write into data memory */
 	wire setflags;          /* whether to set flags */
+	wire usemov;            /* whether we are using a MOV instruction */
 	wire alu1src;           /* whether 1nd ALU operand is first register read or PC */
 	wire alu2src;           /* whether 2nd ALU operand is second register read or extension */
 	wire regwrite;          /* whether to write on register file */
-	wire [1:0] regsrc;      /* where the data to be written into register comes from */
+	wire pctoreg;           /* whether to write PC on register file */
+	wire memtoreg;          /* whether to write data read from memory on register file */
 	wire [`ALUOPSIZE-1:0] aluop;
 	wire [`MOVOPSIZE-1:0] movop;
 	wire [`CONTROLSIZE-1:0] control;
@@ -59,19 +62,23 @@ module datapath(clk, rst);
 	assign memread = control[`MEMREAD];
 	assign memwrite = control[`MEMWRITE];
 	assign setflags = control[`SETFLAGS];
+	assign usemov = control[`USEMOV];
 	assign alu1src = control[`ALU1SRC];
 	assign alu2src = control[`ALU2SRC];
 	assign regwrite = control[`REGWRITE];
-	assign regsrc = control[`REGSRC1:`REGSRC0];
+	assign pctoreg = control[`PCTOREG];
+	assign memtoreg = control[`MEMTOREG];
+
+	/* get result from alu/mov */
+	assign res = usemov ? movres : alures;
 
 	/* decide which data will be written back on the registers */
-	assign writereg = regsrc == `REGSRC_PC ? pc
-	                : regsrc == `REGSRC_MOV ? movres
-	                : regsrc == `REGSRC_MEM ? readmem
-	                : alures;
+	assign writereg = pctoreg ? pc
+	                : memtoreg ? readmem
+	                : res;
 
 	/* compute program counter at each clock posedge */
-	programcounter progcount(clk, rst, 1'b0, branch, alures, pc);
+	programcounter progcount(clk, rst, 1'b0, branch, res, pc);
 
 	/* get instruction from the address in the program counter */
 	memprog memprog(pc, instruction);
@@ -86,7 +93,7 @@ module datapath(clk, rst);
 	registerfile registerfile(clk, rst,
 	                          (reg1loc ? `XZR : rn),
 	                          (reg2loc ? rd : rm),
-	                          (regsrc == `REGSRC_PC ? `XLR : rd),
+	                          (pctoreg ? `XLR : rd),
 	                          writereg,
 	                          regwrite,
 	                          readreg1,
@@ -110,5 +117,5 @@ module datapath(clk, rst);
 	flagsregister flagsreg(clk, rst, setflags, flagstoset, flags);
 
 	/* read and write data from/into the memory */
-	memdata memdata(clk, rst, alures, readreg2, memread, memwrite, readmem);
+	memdata memdata(clk, rst, res, readreg2, memread, memwrite, readmem);
 endmodule
