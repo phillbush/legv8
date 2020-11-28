@@ -314,26 +314,15 @@ In addition, the Control Unit implemented here outputs more control signals than
   between the given value (the second operand) and the contents of the `XZR` register,
   returning thus the second operand.
 
-* This implementation uses a 2-bit control signal called `REGSRC`
-  to specify the source of the data to be written into the register on the write-back stage.
-  In the book, there is only one control signal to do that: the `MEMTOREG` control sign,
-  which decides whether the data to be write on the registers comes from the memory, or from the ALU.
-  Since here this data can come from four places we need a two-bit control signal.
-  These four places are:
-  the ALU result (for arithmetic instructions);
-  the MOV result (for moving instructions);
-  the memory (for `STUR` instructions);
-  or the PC (for the `BL` instruction).
-
 
 ## TODO
 
-* [ ] Decrease the number of bits of the ALU contrl signal from 6 to 5.
+* [ ] Simplify aluop.
 * [x] Reuse the ALU to add the PC to the extended signal (and thus remove `modules/pcadder.v`).
 * [ ] Remove the need for passing the opcode from the ID stage to later stages
       (maybe by increasing the number of control signals?).
 * [x] Add a mux from both `alures` and `movres` to a single `res`.
-* [ ] Remove disassembling of control signal in cpu-singlecycle.
+* [ ] Add support for setting endianess.
 
 
 ## SEE ALSO
