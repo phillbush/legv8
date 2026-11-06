@@ -17,5 +17,6 @@ module mov(readreg, extended, movop, movres);
 	assign array[`MOVSHIFT16] = ~({{48{1'b0}}, {16{1'b1}}} << 'd16);
 	assign array[`MOVSHIFT00] = ~({{48{1'b0}}, {16{1'b1}}});
 
-	assign movres = (movkeep ? readreg & array[movop[1:0]] : {`WORDSIZE{1'b0}}) | extended;
+	assign movres = (movkeep ? readreg & array[movop[1:0]] : {`WORDSIZE{1'b0}})
+	              | (extended << {movop[1:0], 4'b0000});
 endmodule
