@@ -126,7 +126,8 @@ module datapath(clk, rst);
 
 	/* registers to be read from the registers */
 	assign ra = control[`REG1LOC] ? `XZR : rn;
-	assign rb = control[`REG2LOC] ? rd : rm;
+	/* Use Rn for shifts, including its register number for forwarding. */
+	assign rb = aluop[3] ? rn : (control[`REG2LOC] ? rd : rm);
 
 	/* get result of EX stage */
 	assign res = idex_control[`USEMOV] ? movres : alures;

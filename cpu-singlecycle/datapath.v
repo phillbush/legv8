@@ -90,9 +90,10 @@ module datapath(clk, rst);
 	signextension signextension(instruction, extended);
 
 	/* read and write registers from the register file */
+	/* aluop[3] enables shifting; shifts encode their source in Rn. */
 	registerfile registerfile(clk, rst,
 	                          (reg1loc ? `XZR : rn),
-	                          (reg2loc ? rd : rm),
+	                          (aluop[3] ? rn : (reg2loc ? rd : rm)),
 	                          (pctoreg ? `XLR : rd),
 	                          writereg,
 	                          regwrite,
